@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/Zurich",
+  "schedule": [
+    "on monday"
+  ],
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
+  "packageRules": [
+    {
+      "description": "Group all non-major updates together",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "matchPackageNames": [
+        "*"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track the docker-busted image pinned in action.yaml",
+      "managerFilePatterns": [
+        "/^action\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "image:\\s*['\"]?docker://(?<depName>[^:'\"\\s]+):(?<currentValue>[^'\"\\s]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "loose"
+    }
+  ]
+}
