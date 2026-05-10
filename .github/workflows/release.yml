@@ -1,0 +1,50 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 --match 'v*.*.*' --exclude "${{ github.ref_name }}" 2>/dev/null || echo "")
+          echo "previous_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -z "${{ steps.prev_tag.outputs.previous_tag }}" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
+          else
+            COMMITS=$(git log ${{ steps.prev_tag.outputs.previous_tag }}..${{ github.ref_name }} --pretty=format:"- %s (%h)" --reverse)
+          fi
+
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$COMMITS" | grep -E "^- (feat|fix|docs|style|refactor|perf|test|chore)(\(.+\))?:" || echo "$COMMITS"
+            echo ""
+            if [ -n "${{ steps.prev_tag.outputs.previous_tag }}" ]; then
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.prev_tag.outputs.previous_tag }}...${{ github.ref_name }}"
+            fi
+          } > CHANGELOG.md
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ github.ref_name }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          generate_release_notes: false
+          token: ${{ secrets.GITHUB_TOKEN }}
