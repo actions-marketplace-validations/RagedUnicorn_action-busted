@@ -1,0 +1,26 @@
+name: 'Busted for lua codebases'
+author: Michael Wiesendanger<michael.wiesendanger@gmail.com>
+description: 'Runs busted on a codebase or specific spec files'
+branding:
+  icon: check-circle
+  color: green
+inputs:
+  files:
+    description: >
+      A list of spec files or directories to run busted against.
+      Paths are relative to the workspace root.
+    required: false
+    default: '.'
+  args:
+    description: >
+      Additional command-line arguments.
+      See https://lunarmodules.github.io/busted/
+    required: false
+    default: ''
+runs:
+  using: 'docker'
+  image: 'docker://ghcr.io/ragedunicorn/docker-busted:2.3.0-alpine3.23.4-1'
+  entrypoint: sh
+  args:
+    - -c
+    - busted ${{ inputs.args }} -- ${{ inputs.files }}
